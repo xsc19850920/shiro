@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context" xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd 
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+	<!-- <aop:aspectj-autoproxy proxy-target-class="true"/> -->
+	
+	
+	  <!-- QuoteFieldNames输出key时是否使用双引号,默认为true
+				    WriteMapNullValue是否输出值为null的字段,默认为false
+				    WriteNullNumberAsZero数值字段如果为null,输出为0,而非null
+				    WriteNullListAsEmptyList字段如果为null,输出为[],而非null
+				    WriteNullStringAsEmpty字符类型字段如果为null,输出为"",而非null
+				    WriteNullBooleanAsFalseBoolean字段如果为null,输出为false,而非null -->
+	<mvc:annotation-driven >
+		<mvc:message-converters register-defaults="true">
+	      <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+	        <property name="supportedMediaTypes" value="text/html;charset=UTF-8"/>
+	        <property name="features">
+	          <array>
+	            <value>WriteMapNullValue</value>
+	            <value>WriteNullStringAsEmpty</value>
+	            <value>QuoteFieldNames</value>
+	            <value>WriteNullListAsEmpty</value>
+              	<value>WriteMapNullValue</value>
+              	<value>WriteNullBooleanAsFalse</value>
+	          </array>
+	        </property>
+	      </bean>
+	    </mvc:message-converters>
+	</mvc:annotation-driven>
+	
+	<context:component-scan base-package="com.shiro.genpact" />
+	
+	<mvc:resources location="/resources/" mapping="/resources/**" />
+	<!--<mvc:view-controller path="/" view-name="index" /> -->
+	
+	
+	<!-- i18n config start -->
+	
+	<!--Changes the locale when a 'locale' request parameter is sent; e.g./?locale=de -->
+	<mvc:interceptors>
+		<bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor" />
+	</mvc:interceptors>
+	
+	<!-- Saves a locale change using a session -->
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+		<property name="defaultLocale" value="en" />
+	</bean>
+	
+	<!-- Application Message Bundle  -->
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>classpath:i18n/messages</value>
+			</list>
+		</property>
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="cacheSeconds" value="0" />
+	</bean>
+	
+	<!-- i18n config end -->
+	
+	<!-- Saves a locale change using a session -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+	
+	<!-- Application Message Bundle -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- one of the properties available; the maximum file size in bytes -->
+		<!-- Upload file size limitation -->
+		<!-- <property name="maxUploadSize" value="100000"/> -->
+	</bean>
+	
+	
+	
+	
+
+</beans>

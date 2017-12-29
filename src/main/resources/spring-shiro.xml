@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+	    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+		default-lazy-init="true">
+   
+ 	
+	<!-- shiro config start -->
+ 	
+ 	 <!-- 用户授权/认证信息Cache, 采用EhCache 缓存 -->  
+    <bean id="shiroEhcacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">  
+        <property name="cacheManagerConfigFile" value="classpath:ehcache-shiro.xml" />  
+    </bean>   
+    
+    <!-- 凭证匹配器 -->  
+	<bean id="credentialsMatcher" class="com.shiro.genpact.credentials.RetryLimitHashedCredentialsMatcher">  
+	    <constructor-arg ref="shiroEhcacheManager"/>  
+	    <property name="hashAlgorithmName" value="md5"/>  
+	    <property name="hashIterations" value="2"/>  
+	    <property name="storedCredentialsHexEncoded" value="true"/>  
+	</bean>  
+	
+	<bean id="myRealm" class="com.shiro.genpact.realm.UserRealm" >
+		<property name="credentialsMatcher" ref="credentialsMatcher"/>
+        <property name="cachingEnabled" value="true"/>
+        <property name="authenticationCachingEnabled" value="true"/>
+        <property name="authenticationCacheName" value="authenticationCache"/>
+        <property name="authorizationCachingEnabled" value="true"/>
+        <property name="authorizationCacheName" value="authorizationCache"/>
+	</bean> 
+	
+	
+ 	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+	    <!-- Single realm app.  If you have multiple realms, use the 'realms' property instead. -->
+	    <property name="realm" ref="myRealm"/>
+	    <!--cache config  -->
+	    <property name="cacheManager" ref="shiroEhcacheManager" />	
+	</bean>
+	
+	<!-- 基于Form表单的身份验证过滤器 -->  
+	<bean id="authcFilter" class="com.shiro.genpact.filters.MyFormAuthenticationFilter">  
+	   <!--  <property name="usernameParam" value="username"/>  
+	    <property name="passwordParam" value="password"/>  
+	    <property name="rememberMeParam" value="rememberMe"/>   -->
+	    <property name="failureKeyAttribute" value="shiroLoginFailure"/>  
+	</bean>  
+	
+ 	 <bean id="jCaptchaValidateFilter" class="com.shiro.genpact.filters.JCaptchaValidateFilter">
+        <property name="jcaptchaEbabled" value="true"/>
+        <!-- <property name="jcaptchaParam" value="jcaptchaCode"/> -->
+        <property name="failureKeyAttribute" value="shiroLoginFailure"/>
+    </bean>
+ 	
+ 	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+	    <property name="securityManager" ref="securityManager"/>
+	    <property name="loginUrl" value="/login"/>
+	    <property name="successUrl" value="/"/>
+	    <property name="unauthorizedUrl" value="/unauthorized"/>
+	    <property name="filters">
+	    	<util:map>
+	    		 <entry key="authc" value-ref="authcFilter"/>  
+	    		<entry key="jCaptchaValidate" value-ref="jCaptchaValidateFilter"/>  
+	    	</util:map>
+	    </property>
+	    <property name="filterChainDefinitions">
+	        <value>
+	            # some example chain definitions:
+	            # /admin/** = authc, roles[admin]
+	            # /docs/** = authc, perms[document:read]
+	            # /** = authc
+	            # more URL-to-FilterChain definitions here
+	            # 先验证验证码，如果验证码不正确，直接就提示，而不再验证用户名和密码
+	            /login = jCaptchaValidate,authc 
+				/logout = logout
+				/captcha = anon
+				/resources/** = anon
+				/**=authc
+	        </value>
+	    </property>
+	</bean>	
+ 	
+
+	<!-- Define any javax.servlet.Filter beans you want anywhere in this application context.   -->
+	<!-- They will automatically be acquired by the 'shiroFilter' bean above and made available -->
+	<!-- to the 'filterChainDefinitions' property.  Or you can manually/explicitly add them     -->
+	<!-- to the shiroFilter's 'filters' Map if desired. See its JavaDoc for more details.       -->
+	<!-- <bean id="someFilter" class="..."/>
+	<bean id="anotherFilter" class="..."> ... </bean> -->
+ 	
+ 	
+	
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+	 	
+		
+	
+	<!-- <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">    
+        <property name="securityManager" ref="securityManager"/>    
+    </bean>   -->
+    
+	
+ 	<!-- shiro config end -->
+</beans>
